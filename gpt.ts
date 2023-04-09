@@ -1,6 +1,16 @@
 import dotenv from "dotenv"
 dotenv.config()
 
+import SimpleStorage from "./SimpleStorage"
+
+const storage = new SimpleStorage("data.json")
+
+storage.set("key1", "value1")
+storage.set("key2", 42)
+storage.set("key3", 55)
+
+console.log(storage.get("key3"))
+
 import axios from "axios"
 
 export type Message = {
