@@ -17,7 +17,7 @@ app.event("app_mention", async ({ event, client, say, body }) => {
   if (event.text.includes("壁打")) {
     await client.chat.postMessage({
       channel: event.channel,
-      text: `おっけー！壁打ちコーチングをするね。`,
+      text: `はい！私が問いかけてあげる！\nこのスレッドに何か書き込んでね。`,
     })
   }
 })
@@ -35,7 +35,7 @@ app.event("message", async ({ event, client, body }) => {
     parentMessage.messages !== undefined &&
     parentMessage.messages[0] &&
     parentMessage.messages[0].text?.includes(
-      "おっけー！壁打ちコーチングをするね。"
+      `はい！私が問いかけてあげる！\nこのスレッドに何か書き込んでね。`
     )
   ) {
     // スレッドのやり取りを取得
@@ -48,18 +48,16 @@ app.event("message", async ({ event, client, body }) => {
       content: `あなたは、プロの壁打ちコーチです。
 以下の制約条件と入力文をもとに、【出力内容】を出力してください。
 # 制約条件：
-必ず質問をする事。
+必ず質問をする事
 1文で答える事
-答えを出してはいけない。
-40文字以内で発言する事。
+答えや意見を出さない事
+40文字以内で発言する事
 
 # 入力文
 ${text}`,
     })
     // messages.push({ role: "user", content: text })
     const reply = await chatCompletion(messages)
-    console.log("返信")
-    console.log(reply)
     // スレッドのやり取りを保存
     messages.push({ role: reply.role, content: reply.content })
     // ストレージに保存
