@@ -36,4 +36,14 @@ const prompt = `あなたは、プロの壁打ちコーチです。以下の制�
 
 # 入力文：
 GPTとチャットして悩みを解決するサービスをつくろうとしている。需要あるのかなあ`
-chatCompletion([{ role: "user", content: prompt }])
+chatCompletion([
+  { role: "user", content: "今日の天気は？" },
+  { role: "system", content: "晴れです。" },
+  { role: "user", content: "本当に合ってる？" },
+  {
+    role: "system",
+    content:
+      "私はオンライン上での文字情報しか持っていないので、正確な天気情報を得るためには天気予報サイトやアプリ、天気情報を提供する公的機関の情報を確認することをおすすめします。",
+  },
+  { role: "user", content: "どのサイトがおすすめ？" },
+])
