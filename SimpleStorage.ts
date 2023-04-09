@@ -17,9 +17,9 @@ class SimpleStorage {
     fs.writeFileSync(this.storagePath, JSON.stringify(data))
   }
 
-  get(key: string): any {
+  get(key: string): any | null {
     const data = this.getAll()
-    return data[key]
+    return key in data ? data[key] : null
   }
 
   getAll(): Record<string, any> {
