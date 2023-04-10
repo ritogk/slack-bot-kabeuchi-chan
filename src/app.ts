@@ -22,7 +22,7 @@ app.event("app_mention", async ({ event, client, say, body }) => {
 app.event("message", async ({ event, client, body }) => {
   const kabeuchiChan = new KabeuchiChan(process.env.OPENAI_API_KEY ?? "")
 
-  const { thread_ts, bot_id, text } = event as any
+  const { thread_ts, text } = event as any
   if (!thread_ts) return
 
   // スレッドの親メッセージを取得
