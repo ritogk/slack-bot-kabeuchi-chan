@@ -23,6 +23,7 @@ app.event("message", async ({ event, client, body }) => {
   const kabeuchiChan = new KabeuchiChan(process.env.OPENAI_API_KEY ?? "")
 
   const { thread_ts, text } = event as any
+  // スレッドメッセージでない場合は処理を停止
   if (!thread_ts) return
 
   // スレッドの親メッセージを取得
@@ -42,7 +43,7 @@ app.event("message", async ({ event, client, body }) => {
     return
 
   if (parentMessage.messages.length <= 2) {
-    // 初回メッセージ
+    // 初回メッセージの場合
     const message = await kabeuchiChan.sendTopic(text)
     await client.chat.postMessage({
       channel: event.channel,
