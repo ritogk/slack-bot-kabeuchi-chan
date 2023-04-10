@@ -20,11 +20,8 @@ export const generateStatus = async (
   })
 
   if (
-    !(
-      parentMessage.messages !== undefined &&
-      parentMessage.messages[0] &&
-      parentMessage.messages[0].text?.includes(KabeuchiChan.firstReply)
-    )
+    parentMessage.messages === undefined ||
+    !parentMessage.messages[0].text?.includes(KabeuchiChan.firstReply)
   ) {
     return Status.UnReply
   }
