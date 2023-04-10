@@ -1,7 +1,9 @@
 import { App } from "@slack/bolt"
 import dotenv from "dotenv"
-import { chatCompletion } from "./gpt"
-import SimpleStorage from "./SimpleStorage"
+import SimpleStorage from "./core/simple-storage"
+import { chatCompletion } from "@/api/chat-gpt-api"
+
+import { KabeuchiChan } from "@/models/kabeuchi-chan"
 
 dotenv.config()
 
@@ -13,15 +15,18 @@ const app = new App({
 
 // メンションにslackbotを指定して送信した場合のsubscribe
 app.event("app_mention", async ({ event, client, say, body }) => {
+  const kabeuchiChan = new KabeuchiChan(process.env.OPENAI_API_KEY ?? "")
   // メッセージ内に「壁打」の文字列が含まれている。
   await client.chat.postMessage({
     channel: event.channel,
-    text: `はい！私が壁打ち相手になってあげる！\nまずこのスレッドに解決したい課題を書いてね。`,
+    text: kabeuchiChan.call(),
   })
 })
 
 // メンションにslackbotを指定して送信した場合のsubscribe
 app.event("message", async ({ event, client, body }) => {
+  const kabeuchiChan = new KabeuchiChan(process.env.OPENAI_API_KEY ?? "")
+
   const { thread_ts, bot_id, text } = event as any
   if (!thread_ts) return
 
@@ -33,50 +38,26 @@ app.event("message", async ({ event, client, body }) => {
   if (
     parentMessage.messages !== undefined &&
     parentMessage.messages[0] &&
-    parentMessage.messages[0].text?.includes(
-      `はい！私が壁打ち相手になってあげる！\nまずこのスレッドに解決したい課題を書いてね。`
-    )
+    parentMessage.messages[0].text?.includes(kabeuchiChan.firstReply)
   ) {
-    // スレッドのやり取りを取得
-    const storage = new SimpleStorage(`${thread_ts}.json`)
-    const history = storage.get("history")
-    const messages = history ? history : []
-
     const goal = parentMessage.messages[1].text
     if (parentMessage.messages.length <= 2) {
-      messages.push({
-        role: "system",
-        content: `あなたはコーチングが得意なプロのカウンセラーです。
-以下の達成目標と制約条件と入力文をもとに回答してください。
-
-# 達成目標:
-${goal}
-
-# 制約条件：
-必ず質問をする事
-1文で答える事
-答えや意見を出さない事
-40文字以内で回答する事`,
+      const message = await kabeuchiChan.sendTopic(text)
+      await client.chat.postMessage({
+        channel: event.channel,
+        thread_ts: thread_ts,
+        text: message,
       })
     } else {
-      messages.push({
-        role: "user",
-        content: text,
+      kabeuchiChan.remember(thread_ts)
+      const message = await kabeuchiChan.askQuestion(text)
+      await client.chat.postMessage({
+        channel: event.channel,
+        thread_ts: thread_ts,
+        text: message,
       })
     }
-
-    // messages.push({ role: "user", content: text })
-    const reply = await chatCompletion(messages)
-    // スレッドのやり取りを保存
-    messages.push({ role: reply.role, content: reply.content })
-    // ストレージに保存
-    storage.set("history", messages)
-
-    await client.chat.postMessage({
-      channel: event.channel,
-      thread_ts: thread_ts,
-      text: reply.content,
-    })
+    kabeuchiChan.memorize(thread_ts)
   }
 })
 ;(async () => {

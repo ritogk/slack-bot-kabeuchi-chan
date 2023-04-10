@@ -12,6 +12,5 @@
     "baseUrl": "./",
     "paths": { "@/*": ["src/*"] },
     "outDir": "./dist"
-  },
-  "include": ["src/core/openapi/index.ts"] // 特定のファイルを軸にしてコンパイルを行う
+  }
 }
