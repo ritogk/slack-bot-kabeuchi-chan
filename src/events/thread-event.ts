@@ -1,6 +1,5 @@
 import { App } from "@slack/bolt"
-import { KabeuchiChan, Status } from "@/models/kabeuchi-chan"
-import { generateStatus } from "@/models/generate-status"
+import { KabeuchiChan } from "@/models/kabeuchi-chan/kabeuchi-chan"
 
 export const threadEvent = (app: App) => {
   // slackbotが生成したメッセージに対してスレッドが書き込まれた場合の処理
