@@ -8,7 +8,7 @@ class SimpleStorage<T extends JsonObject> {
   private storagePath: string
 
   constructor(filename: string) {
-    this.storagePath = path.resolve(__dirname + "/storage", filename)
+    this.storagePath = path.resolve(__dirname, "../storage", filename)
     if (!fs.existsSync(this.storagePath)) {
       fs.writeFileSync(this.storagePath, JSON.stringify({}))
     }
