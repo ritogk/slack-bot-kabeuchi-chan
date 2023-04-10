@@ -9,20 +9,29 @@ interface IKabeuchiChan {
   remember: (storageKey: string) => void
   // ストレージに保存
   memorize: (storageKey: string) => void
-  // 課題を伝える。処理としてはsystemMessageの生成とクラス変数への保持。
+  // 課題を伝える。
   sendTopic: (topic: string) => Promise<string>
   // メッセージを送信して回答を得る。
   sendMessage: (question: string) => Promise<string>
 }
+
+// 壁打ちちゃんの状態
+export enum Status {
+  UnReply,
+  AskedTopice,
+  AcceptedTopic,
+}
+
 /**
  * 壁打ちちゃん
  */
 export class KabeuchiChan implements IKabeuchiChan {
   readonly openaiApiKey: string
   private history: Message[] = []
-  readonly firstReply = `はい！私が壁打ち相手になってあげる！
+  private status: Status = Status.UnReply
+  static readonly firstReply = `はい！私が壁打ち相手になってあげる！
 まずこのスレッドに解決したい課題を書いてね。`
-  readonly baseSystemMessage = `あなたはコーチングが得意なプロのカウンセラーです。
+  static readonly baseSystemMessage = `あなたはコーチングが得意なプロのカウンセラーです。
 以下の達成目標と制約条件と入力文をもとに回答してください。
   
 # 達成目標:
@@ -43,7 +52,8 @@ export class KabeuchiChan implements IKabeuchiChan {
    * @returns
    */
   call = (): string => {
-    return this.firstReply
+    this.status = Status.AskedTopice
+    return KabeuchiChan.firstReply
   }
 
   /**
@@ -51,11 +61,14 @@ export class KabeuchiChan implements IKabeuchiChan {
    * @param storageKey
    */
   remember = (storageKey: string) => {
-    const storage = new SimpleStorage<{ history: Message[] }>(
-      `${storageKey}.json`
-    )
+    const storage = new SimpleStorage<{
+      history: Message[]
+      status: Status
+    }>(`${storageKey}.json`)
     const history = storage.get("history")
     this.history = history ? history : []
+    const status = storage.get("status")
+    this.status = status ? status : Status.UnReply
   }
 
   /**
@@ -63,10 +76,12 @@ export class KabeuchiChan implements IKabeuchiChan {
    * @param storageKey
    */
   memorize = (storageKey: string) => {
-    const storage = new SimpleStorage<{ history: Message[] }>(
-      `${storageKey}.json`
-    )
+    const storage = new SimpleStorage<{
+      history: Message[]
+      status: Status
+    }>(`${storageKey}.json`)
     storage.set("history", this.history)
+    storage.set("status", this.status)
   }
 
   /**
@@ -77,7 +92,7 @@ export class KabeuchiChan implements IKabeuchiChan {
   sendTopic = async (topic: string): Promise<string> => {
     const systemMessage: Message = {
       role: "system",
-      content: this.baseSystemMessage.replace("###topic###", topic),
+      content: KabeuchiChan.baseSystemMessage.replace("###topic###", topic),
     }
     const userMessage: Message = {
       role: "user",
@@ -87,6 +102,8 @@ export class KabeuchiChan implements IKabeuchiChan {
     this.history.push(userMessage)
     const assistantMessage = await chatCompletion(this.history)
     this.history.push(assistantMessage)
+
+    this.status = Status.AcceptedTopic
     return assistantMessage.content
   }
 
