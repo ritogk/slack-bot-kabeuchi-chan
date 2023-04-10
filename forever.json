@@ -1,0 +1,13 @@
+{
+  "uid": "kabeuchi-chan",
+  "append": true,
+  "watch": true,
+  "script": "node_modules/.bin/ts-node",
+  "sourceDir": "/home/ubuntu/slack-bot-kabeuchi-chan",
+  "args": [
+    "--files",
+    "-r",
+    "tsconfig-paths/register",
+    "src/app.ts"
+  ]
+}
