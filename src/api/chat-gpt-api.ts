@@ -23,7 +23,11 @@ export const chatCompletion = async (messages: Message[]): Promise<Message> => {
     },
     data: body,
   }
-  const response = await axios(options)
-  const choice = 0
-  return response.data.choices[choice].message
+  try {
+    const response = await axios(options)
+    return response.data.choices[0].message
+  } catch (e) {
+    console.error(e)
+    return { role: "system", content: "error" }
+  }
 }
