@@ -1,7 +1,10 @@
 import fs from "fs"
 import path from "path"
 
-class SimpleStorage {
+/**
+ * jsonを使った簡易的なストレージ
+ */
+class SimpleStorage<T extends JsonObject> {
   private storagePath: string
 
   constructor(filename: string) {
@@ -11,18 +14,20 @@ class SimpleStorage {
     }
   }
 
-  set(key: string, value: any): void {
+  set<K extends keyof T>(key: K, value: T[K]): void {
     const data = this.getAll()
+    if (!data) return undefined
     data[key] = value
     fs.writeFileSync(this.storagePath, JSON.stringify(data))
   }
 
-  get(key: string): any | null {
+  get<K extends keyof T>(key: K): T[K] | undefined {
     const data = this.getAll()
-    return key in data ? data[key] : null
+    if (!data) return undefined
+    return key in data ? data[key] : undefined
   }
 
-  getAll(): Record<string, any> {
+  getAll(): T | undefined {
     const rawData = fs.readFileSync(this.storagePath, "utf-8")
     return JSON.parse(rawData)
   }

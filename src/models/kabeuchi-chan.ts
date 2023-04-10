@@ -51,7 +51,9 @@ export class KabeuchiChan implements IKabeuchiChan {
    * @param storageKey
    */
   remember = (storageKey: string) => {
-    const storage = new SimpleStorage(`${storageKey}.json`)
+    const storage = new SimpleStorage<{ history: Message[] }>(
+      `${storageKey}.json`
+    )
     const history = storage.get("history")
     this.history = history ? history : []
   }
@@ -61,7 +63,9 @@ export class KabeuchiChan implements IKabeuchiChan {
    * @param storageKey
    */
   memorize = (storageKey: string) => {
-    const storage = new SimpleStorage(`${storageKey}.json`)
+    const storage = new SimpleStorage<{ history: Message[] }>(
+      `${storageKey}.json`
+    )
     storage.set("history", this.history)
   }
 
