@@ -9,32 +9,16 @@ export const threadEvent = (app: App) => {
     // スレッドメッセージでない場合は処理を停止
     if (!thread_ts) return
 
-    // 壁打ちちゃんの状態を取得する
-    const status = await generateStatus(client, channel, thread_ts)
-
     const kabeuchiChan = new KabeuchiChan(
       process.env.OPENAI_API_KEY ?? "",
       thread_ts
     )
 
-    let replay = ""
-    switch (status) {
-      case Status.UnReply:
-        return
-      case Status.AskedTopice:
-        replay = await kabeuchiChan.sendTopic(text)
-        break
-      case Status.AcceptedTopic:
-        replay = await kabeuchiChan.sendMessage(text)
-        break
-      default:
-        break
-    }
-
+    const kabeuchiMessage = await kabeuchiChan.chat(text)
     await client.chat.postMessage({
       channel: event.channel,
       thread_ts: thread_ts,
-      text: replay,
+      text: kabeuchiMessage,
     })
   })
 }

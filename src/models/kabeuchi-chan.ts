@@ -8,16 +8,8 @@ export enum Status {
   AskedTopice,
   AcceptedTopic,
 }
-
-// コンストラクタの中で思い出す。
-// メッセージ送信時に記憶させる。
-// 壁打ちちゃんが送信したメッセージを１壁打ちちゃんとする。
-
 interface IKabeuchiChan {
-  // 課題を伝える。
-  sendTopic: (topic: string) => Promise<string>
-  // メッセージを送信して回答を得る。
-  sendMessage: (question: string) => Promise<string>
+  chat: (message: string) => Promise<string>
 }
 
 /**
@@ -27,7 +19,7 @@ export class KabeuchiChan implements IKabeuchiChan {
   readonly openaiApiKey: string
   readonly threadTs: string
   private history: Message[] = []
-  private status: Status = Status.UnReply
+  private status: Status = Status.AskedTopice
   static readonly firstReply = `はい！私が壁打ち相手になってあげる！
 まずこのスレッドに解決したい課題を書いてね。`
   static readonly baseSystemMessage = `あなたはコーチングが得意なプロのカウンセラーです。
@@ -42,6 +34,9 @@ export class KabeuchiChan implements IKabeuchiChan {
 答えや意見を出さない事
 40文字以内で回答する事`
 
+  /**
+   * constructor
+   */
   constructor(openaiApiKey: string, threadTs: string) {
     this.openaiApiKey = openaiApiKey
     this.threadTs = threadTs
@@ -49,40 +44,23 @@ export class KabeuchiChan implements IKabeuchiChan {
   }
 
   /**
-   * 「壁打ちちゃん」を呼ぶ
+   * チャットを行う
+   * @param message
    * @returns
    */
-  call = (): string => {
-    this.status = Status.AskedTopice
-    return KabeuchiChan.firstReply
-  }
-
-  /**
-   * 壁打ちちゃん「会話履歴を思い出す」
-   * @param storageKey
-   */
-  private loadHistory = () => {
-    const storage = new SimpleStorage<{
-      history: Message[]
-      status: Status
-    }>(`${this.threadTs}.json`)
-    const history = storage.get("history")
-    this.history = history ? history : []
-    const status = storage.get("status")
-    this.status = status ? status : Status.UnReply
-  }
-
-  /**
-   * 壁打ちちゃんが「会話履歴を記憶する」
-   * @param storageKey
-   */
-  private saveHistory = () => {
-    const storage = new SimpleStorage<{
-      history: Message[]
-      status: Status
-    }>(`${this.threadTs}.json`)
-    storage.set("history", this.history)
-    storage.set("status", this.status)
+  chat = async (message: string): Promise<string> => {
+    let gptMessage = ""
+    switch (this.status) {
+      case Status.AskedTopice:
+        gptMessage = await this.sendTopic(message)
+        break
+      case Status.AcceptedTopic:
+        gptMessage = await this.sendMessage(message)
+        break
+      default:
+        break
+    }
+    return gptMessage
   }
 
   /**
@@ -90,7 +68,8 @@ export class KabeuchiChan implements IKabeuchiChan {
    * @param topic
    * @returns
    */
-  sendTopic = async (topic: string): Promise<string> => {
+  private sendTopic = async (topic: string): Promise<string> => {
+    // chatgptの役割をきめる
     const systemMessage: Message = {
       role: "system",
       content: KabeuchiChan.baseSystemMessage.replace("###topic###", topic),
@@ -101,10 +80,12 @@ export class KabeuchiChan implements IKabeuchiChan {
     }
     this.history.push(systemMessage)
     this.history.push(userMessage)
+    // chatgptにchatリクエストを送る
     const assistantMessage = await chatCompletion(this.history)
     this.history.push(assistantMessage)
-
+    // ステータス変更
     this.status = Status.AcceptedTopic
+    // 会話履歴の永続化
     this.saveHistory()
     return assistantMessage.content
   }
@@ -114,7 +95,7 @@ export class KabeuchiChan implements IKabeuchiChan {
    * @param message
    * @returns
    */
-  sendMessage = async (message: string): Promise<string> => {
+  private sendMessage = async (message: string): Promise<string> => {
     const userMessage: Message = {
       role: "user",
       content: message,
@@ -122,7 +103,36 @@ export class KabeuchiChan implements IKabeuchiChan {
     this.history.push(userMessage)
     const assistantMessage = await chatCompletion(this.history)
     this.history.push(assistantMessage)
+    // 会話履歴の永続化
     this.saveHistory()
     return assistantMessage.content
+  }
+
+  /**
+   * 「会話履歴」の読み込み
+   * @param storageKey
+   */
+  private loadHistory = () => {
+    const storage = new SimpleStorage<{
+      history: Message[]
+      status: Status
+    }>(`${this.threadTs}.json`)
+    const history = storage.get("history")
+    this.history = history ? history : []
+    const status = storage.get("status")
+    this.status = status ? status : Status.AskedTopice
+  }
+
+  /**
+   * 「会話履歴」を永続化
+   * @param storageKey
+   */
+  private saveHistory = () => {
+    const storage = new SimpleStorage<{
+      history: Message[]
+      status: Status
+    }>(`${this.threadTs}.json`)
+    storage.set("history", this.history)
+    storage.set("status", this.status)
   }
 }
