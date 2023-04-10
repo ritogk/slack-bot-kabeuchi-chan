@@ -12,7 +12,11 @@ export const threadEvent = (app: App) => {
     // 壁打ちちゃんの状態を取得する
     const status = await generateStatus(client, channel, thread_ts)
 
-    const kabeuchiChan = new KabeuchiChan(process.env.OPENAI_API_KEY ?? "")
+    const kabeuchiChan = new KabeuchiChan(
+      process.env.OPENAI_API_KEY ?? "",
+      thread_ts
+    )
+
     let replay = ""
     switch (status) {
       case Status.UnReply:
@@ -21,7 +25,6 @@ export const threadEvent = (app: App) => {
         replay = await kabeuchiChan.sendTopic(text)
         break
       case Status.AcceptedTopic:
-        kabeuchiChan.remember(thread_ts)
         replay = await kabeuchiChan.sendMessage(text)
         break
       default:
@@ -33,6 +36,5 @@ export const threadEvent = (app: App) => {
       thread_ts: thread_ts,
       text: replay,
     })
-    kabeuchiChan.memorize(thread_ts)
   })
 }

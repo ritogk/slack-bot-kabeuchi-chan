@@ -2,19 +2,6 @@ import { Message } from "@/api/chat-gpt-api"
 import { chatCompletion } from "@/api/chat-gpt-api"
 import SimpleStorage from "@/core/simple-storage"
 
-interface IKabeuchiChan {
-  // 初回の応答文を取得
-  call: () => string
-  // 思い出す
-  remember: (storageKey: string) => void
-  // ストレージに保存
-  memorize: (storageKey: string) => void
-  // 課題を伝える。
-  sendTopic: (topic: string) => Promise<string>
-  // メッセージを送信して回答を得る。
-  sendMessage: (question: string) => Promise<string>
-}
-
 // 壁打ちちゃんの状態
 export enum Status {
   UnReply,
@@ -22,11 +9,23 @@ export enum Status {
   AcceptedTopic,
 }
 
+// コンストラクタの中で思い出す。
+// メッセージ送信時に記憶させる。
+// 壁打ちちゃんが送信したメッセージを１壁打ちちゃんとする。
+
+interface IKabeuchiChan {
+  // 課題を伝える。
+  sendTopic: (topic: string) => Promise<string>
+  // メッセージを送信して回答を得る。
+  sendMessage: (question: string) => Promise<string>
+}
+
 /**
  * 壁打ちちゃん
  */
 export class KabeuchiChan implements IKabeuchiChan {
   readonly openaiApiKey: string
+  readonly threadTs: string
   private history: Message[] = []
   private status: Status = Status.UnReply
   static readonly firstReply = `はい！私が壁打ち相手になってあげる！
@@ -43,8 +42,10 @@ export class KabeuchiChan implements IKabeuchiChan {
 答えや意見を出さない事
 40文字以内で回答する事`
 
-  constructor(openaiApiKey: string) {
+  constructor(openaiApiKey: string, threadTs: string) {
     this.openaiApiKey = openaiApiKey
+    this.threadTs = threadTs
+    this.loadHistory()
   }
 
   /**
@@ -60,11 +61,11 @@ export class KabeuchiChan implements IKabeuchiChan {
    * 壁打ちちゃん「会話履歴を思い出す」
    * @param storageKey
    */
-  remember = (storageKey: string) => {
+  private loadHistory = () => {
     const storage = new SimpleStorage<{
       history: Message[]
       status: Status
-    }>(`${storageKey}.json`)
+    }>(`${this.threadTs}.json`)
     const history = storage.get("history")
     this.history = history ? history : []
     const status = storage.get("status")
@@ -75,11 +76,11 @@ export class KabeuchiChan implements IKabeuchiChan {
    * 壁打ちちゃんが「会話履歴を記憶する」
    * @param storageKey
    */
-  memorize = (storageKey: string) => {
+  private saveHistory = () => {
     const storage = new SimpleStorage<{
       history: Message[]
       status: Status
-    }>(`${storageKey}.json`)
+    }>(`${this.threadTs}.json`)
     storage.set("history", this.history)
     storage.set("status", this.status)
   }
@@ -104,6 +105,7 @@ export class KabeuchiChan implements IKabeuchiChan {
     this.history.push(assistantMessage)
 
     this.status = Status.AcceptedTopic
+    this.saveHistory()
     return assistantMessage.content
   }
 
@@ -120,6 +122,7 @@ export class KabeuchiChan implements IKabeuchiChan {
     this.history.push(userMessage)
     const assistantMessage = await chatCompletion(this.history)
     this.history.push(assistantMessage)
+    this.saveHistory()
     return assistantMessage.content
   }
 }
