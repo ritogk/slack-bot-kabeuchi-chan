@@ -11,8 +11,8 @@ interface IKabeuchiChan {
   memorize: (storageKey: string) => void
   // 課題を伝える。処理としてはsystemMessageの生成とクラス変数への保持。
   sendTopic: (topic: string) => Promise<string>
-  // 質問して尋ねる。
-  askQuestion: (question: string) => Promise<string>
+  // メッセージを送信して回答を得る。
+  sendMessage: (question: string) => Promise<string>
 }
 /**
  * 壁打ちちゃん
@@ -44,7 +44,7 @@ export class KabeuchiChan implements IKabeuchiChan {
   }
 
   /**
-   * 初回の呼びかけ
+   * 「壁打ちちゃん」を呼ぶ
    * @returns
    */
   call = (): string => {
@@ -52,7 +52,7 @@ export class KabeuchiChan implements IKabeuchiChan {
   }
 
   /**
-   * かべうちちゃんが思い出す
+   * 壁打ちちゃん「会話履歴を思い出す」
    * @param storageKey
    */
   remember = (storageKey: string) => {
@@ -62,7 +62,7 @@ export class KabeuchiChan implements IKabeuchiChan {
   }
 
   /**
-   * 壁打ちちゃんが覚える。
+   * 壁打ちちゃんが「会話履歴を記憶する」
    * @param storageKey
    */
   memorize = (storageKey: string) => {
@@ -71,7 +71,7 @@ export class KabeuchiChan implements IKabeuchiChan {
   }
 
   /**
-   * トピックを伝える
+   * 壁打ちちゃんに「トピックを伝える」
    * @param topic
    * @returns
    */
@@ -91,10 +91,15 @@ export class KabeuchiChan implements IKabeuchiChan {
     return assistantMessage.content
   }
 
-  askQuestion = async (question: string): Promise<string> => {
+  /**
+   * 壁打ちちゃんに「メッセージを伝える」
+   * @param message
+   * @returns
+   */
+  sendMessage = async (message: string): Promise<string> => {
     const userMessage: Message = {
       role: "user",
-      content: question,
+      content: message,
     }
     this.history.push(userMessage)
     const assistantMessage = await chatCompletion(this.history)
