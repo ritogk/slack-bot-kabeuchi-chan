@@ -1,5 +1,5 @@
 import { Message } from "@/api/chat-gpt-api"
-import { chatCompletion } from "@/gpt"
+import { chatCompletion } from "@/api/chat-gpt-api"
 import SimpleStorage from "@/core/simple-storage"
 
 interface IKabeuchiChan {
@@ -19,10 +19,9 @@ interface IKabeuchiChan {
  */
 export class KabeuchiChan implements IKabeuchiChan {
   readonly openaiApiKey: string
-
+  private history: Message[] = []
   readonly firstReply = `はい！私が壁打ち相手になってあげる！
 まずこのスレッドに解決したい課題を書いてね。`
-
   readonly baseSystemMessage = `あなたはコーチングが得意なプロのカウンセラーです。
 以下の達成目標と制約条件と入力文をもとに回答してください。
   
@@ -34,10 +33,6 @@ export class KabeuchiChan implements IKabeuchiChan {
 1文で答える事
 答えや意見を出さない事
 40文字以内で回答する事`
-
-  private topic = ""
-
-  private history: Message[] = []
 
   constructor(openaiApiKey: string) {
     this.openaiApiKey = openaiApiKey
