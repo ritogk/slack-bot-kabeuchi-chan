@@ -1,6 +1,6 @@
 import { Message } from "@/api/chat-gpt-api"
 import { chatCompletion } from "@/api/chat-gpt-api"
-import SimpleStorage from "@/core/simple-storage"
+import SimpleStorage from "@/core/json-storage"
 import { messages } from "@/models/kabeuchi-chan/messages"
 import { Status } from "@/models/kabeuchi-chan/status"
 

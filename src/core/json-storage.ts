@@ -4,7 +4,7 @@ import path from "path"
 /**
  * jsonを使った簡易的なストレージ
  */
-class SimpleStorage<T extends JsonObject> {
+class JsonStorage<T extends JsonObject> {
   private storagePath: string
 
   constructor(filename: string) {
@@ -33,4 +33,4 @@ class SimpleStorage<T extends JsonObject> {
   }
 }
 
-export default SimpleStorage
+export default JsonStorage
