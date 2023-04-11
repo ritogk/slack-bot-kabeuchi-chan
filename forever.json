@@ -1,9 +1,7 @@
 {
   "uid": "kabeuchi-chan",
   "append": true,
-  "watch": true,
-  "watchDirectory": "/home/ubuntu/slack-bot-kabeuchi-chan/src",
-  "watchIgnore": ["storage/**/*"],
+  "watch": false,
   "script": "node_modules/.bin/ts-node",
   "sourceDir": "/home/ubuntu/slack-bot-kabeuchi-chan",
   "args": [
